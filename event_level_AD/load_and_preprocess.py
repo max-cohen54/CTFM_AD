@@ -9,11 +9,11 @@ import os
 
 
 filemap = {
-    "bkg":"/eos/home-m/mmcohen/chop_or_not_development/data/background_for_training.h5",
-    "a4l":"/eos/home-m/mmcohen/chop_or_not_development/data/Ato4l_lepFilter_13TeV.h5",
-    "htaunu":"/eos/home-m/mmcohen/chop_or_not_development/data/hChToTauNu_13TeV_PU20.h5",
-    "htautau":"/eos/home-m/mmcohen/chop_or_not_development/data/hToTauTau_13TeV_PU20.h5",
-    "lq":"/eos/home-m/mmcohen/chop_or_not_development/data/leptoquark_LOWMASS_lepFilter_13TeV.h5",
+    "bkg":"/global/homes/m/mcohen54/chop_or_not_development/data/background_for_training.h5",
+    "a4l":"/global/homes/m/mcohen54/chop_or_not_development/data/Ato4l_lepFilter_13TeV.h5",
+    "htaunu":"/global/homes/m/mcohen54/chop_or_not_development/data/hChToTauNu_13TeV_PU20.h5",
+    "htautau":"/global/homes/m/mcohen54/chop_or_not_development/data/hToTauTau_13TeV_PU20.h5",
+    "lq":"/global/homes/m/mcohen54/chop_or_not_development/data/leptoquark_LOWMASS_lepFilter_13TeV.h5",
 }
 
 def transform_and_normalize(data, mean_std=None, eps=1e-8, pxpypz=True):
@@ -117,16 +117,16 @@ def load_and_preprocess(p_train=0.5, p_test=0.25, plots_path=None, pxpypz=True):
 
     # Normalize the data
     if pxpypz:
+        # First, scale and compute mean/std over train set
+        scaled_train_data, mean, std = transform_and_normalize(datasets['bkg_train']['data'])
+        datasets['bkg_train']['data'] = scaled_train_data
+        
+        # Then, apply same scaling with same mean/std to all the other datasets
         for tag in datasets.keys():
-            # First, scale and compute mean/std over train set
-            scaled_train_data, mean, std = transform_and_normalize(datasets[tag]['data'])
-            datasets['bkg_train']['data'] = scaled_train_data
+            if tag == 'bkg_train': continue
 
-            # Then, apply same scaling with same mean/std to test/val sets
-            scaled_test_data, _, _ = transform_and_normalize(datasets['bkg_test']['data'], mean_std=(mean, std))
-            datasets['bkg_test']['data'] = scaled_test_data
-            scaled_val_data, _, _ = transform_and_normalize(datasets['bkg_val']['data'], mean_std=(mean, std))
-            datasets['bkg_val']['data'] = scaled_val_data
+            scaled_data, _, _ = transform_and_normalize(datasets[tag]['data'], mean_std=(mean, std))
+            datasets[tag]['data'] = scaled_data
 
     else:
         mean_pt = np.mean(datasets['bkg_train']['data'][:, :, 0], axis=0, keepdims=True)
